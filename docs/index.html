@@ -53,8 +53,8 @@
         }
         .output.visible { display: block; }
         .output .label { color: #a0a0a0; font-size: 12px; }
-        .output .stdout { color: #98c379; margin-top: 8px; }
-        .output .stderr { color: #e06c75; margin-top: 8px; }
+        .output .stdout { color: #98c379; }
+        .output .stderr { color: #e06c75; }
         .output .exit-code { color: #61afef; }
         .error { color: #c92a2a; margin-top: 10px; font-weight: 500; }
         .helper { color: #595959; font-size: 13px; margin-top: 4px; }
@@ -109,12 +109,8 @@
 
     <div class="error" id="error" role="alert" aria-live="polite"></div>
 
-    <div class="output" id="output">
-        <div><span class="label">Command:</span> <span id="out-cmd"></span></div>
-        <div><span class="label">Exit code:</span> <span class="exit-code" id="out-exit"></span></div>
-        <div class="stdout" id="out-stdout"></div>
-        <div class="stderr" id="out-stderr"></div>
-    </div>
+    <div class="output" id="output"><span class="label">%</span> <span id="out-cmd"></span>
+<span class="stdout" id="out-stdout"></span><span class="stderr" id="out-stderr"></span><span class="label">Returned</span> <span class="exit-code" id="out-exit"></span></div>
 
     <script>
         const DEFAULT_API_URL = 'https://webify-bash-production.up.railway.app';
