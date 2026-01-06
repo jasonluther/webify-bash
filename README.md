@@ -1,5 +1,7 @@
 # webify-bash
 
+> **Disclaimer**: This project is a demonstration of concepts only. It is not intended for production deployment. Use at your own risk.
+
 A simple HTTP API for executing whitelisted shell commands safely. Built with FastAPI.
 
 ## Features
