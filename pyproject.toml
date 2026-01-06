@@ -17,5 +17,8 @@ dev = [
     "pre-commit",
 ]
 
+[tool.setuptools]
+py-modules = ["app", "cli"]
+
 [tool.pytest.ini_options]
 testpaths = ["test_app.py"]
