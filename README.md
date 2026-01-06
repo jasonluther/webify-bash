@@ -58,11 +58,11 @@ Response:
 
 ## Adding Commands
 
-Edit `ALLOWED_COMMANDS` in `app.py`:
+Edit `commands.json`:
 
-```python
-ALLOWED_COMMANDS = {
-    "mycommand": {"flags": ["-a", "-b"], "bare_arg": True},
+```json
+{
+  "mycommand": {"flags": ["-a", "-b"], "bare_arg": true}
 }
 ```
 
