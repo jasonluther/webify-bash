@@ -91,9 +91,15 @@
     <h1>webify-bash</h1>
     <p class="disclaimer">Demonstration only. Not for production use.</p>
 
-    <div class="form-group">
+    <div class="form-group" id="token-section">
         <label for="token">Bearer Token</label>
         <input type="password" id="token" placeholder="Enter your token">
+        <button type="button" id="save-token" style="margin-top: 8px;">Save Token</button>
+    </div>
+
+    <div class="form-group" id="token-saved" style="display: none;">
+        <span style="color: #28a745;">Token saved</span>
+        <button type="button" id="clear-token" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change Token</button>
     </div>
 
     <div class="form-group">
@@ -131,20 +137,62 @@
 
     <script>
         const API_URL = 'https://webify-bash-production.up.railway.app';
+        const TOKEN_KEY = 'webify-bash-token';
+
+        const tokenSection = document.getElementById('token-section');
+        const tokenSaved = document.getElementById('token-saved');
+        const tokenInput = document.getElementById('token');
+        const errorEl = document.getElementById('error');
+
+        function showTokenInput() {
+            tokenSection.style.display = 'block';
+            tokenSaved.style.display = 'none';
+        }
+
+        function hideTokenInput() {
+            tokenSection.style.display = 'none';
+            tokenSaved.style.display = 'block';
+        }
+
+        function getToken() {
+            return localStorage.getItem(TOKEN_KEY) || tokenInput.value;
+        }
+
+        // Check for saved token on load
+        if (localStorage.getItem(TOKEN_KEY)) {
+            hideTokenInput();
+        }
+
+        // Save token button
+        document.getElementById('save-token').addEventListener('click', () => {
+            const token = tokenInput.value.trim();
+            if (token) {
+                localStorage.setItem(TOKEN_KEY, token);
+                tokenInput.value = '';
+                hideTokenInput();
+                errorEl.textContent = '';
+            }
+        });
+
+        // Clear token button
+        document.getElementById('clear-token').addEventListener('click', () => {
+            localStorage.removeItem(TOKEN_KEY);
+            showTokenInput();
+        });
 
         document.getElementById('execute').addEventListener('click', async () => {
-            const token = document.getElementById('token').value;
+            const token = getToken();
             const command = document.getElementById('command').value;
             const flagsInput = document.getElementById('flags').value.trim();
             const argsInput = document.getElementById('args').value.trim();
 
-            const errorEl = document.getElementById('error');
             const outputEl = document.getElementById('output');
             errorEl.textContent = '';
             outputEl.classList.remove('visible');
 
             if (!token) {
                 errorEl.textContent = 'Bearer token is required';
+                showTokenInput();
                 return;
             }
 
@@ -174,6 +222,11 @@
 
                 if (!response.ok) {
                     errorEl.textContent = data.detail || 'Request failed';
+                    // Show token input on auth error
+                    if (response.status === 401) {
+                        localStorage.removeItem(TOKEN_KEY);
+                        showTokenInput();
+                    }
                     return;
                 }
 
