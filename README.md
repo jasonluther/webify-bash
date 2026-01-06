@@ -12,6 +12,7 @@ A simple HTTP API for executing whitelisted shell commands safely. Built with Fa
 - JSON responses with stdout, stderr, and exit code
 - Container support (podman/docker)
 - GitHub Actions CI with multi-platform images (amd64/arm64)
+- Web UI hosted on GitHub Pages
 
 ## Allowed Commands
 
@@ -92,6 +93,19 @@ podman run --rm --network host \
   -e BEARER_TOKEN=secret \
   ghcr.io/jasonluther/webify-bash python cli.py ls -l
 ```
+
+## Web App
+
+A simple web interface is available at: https://jasonluther.github.io/webify-bash/
+
+### Enable GitHub Pages (for your own fork)
+
+1. Go to your repo's Settings → Pages
+2. Source: Deploy from a branch
+3. Branch: `main`, folder: `/docs`
+4. Save
+
+The app will be available at `https://<username>.github.io/webify-bash/`
 
 ## API
 
