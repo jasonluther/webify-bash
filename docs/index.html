@@ -85,6 +85,15 @@
             color: #e06c75;
             margin-top: 10px;
         }
+        .helper {
+            color: #666;
+            font-size: 13px;
+            margin-top: 4px;
+        }
+        input:disabled {
+            background: #e9e9e9;
+            color: #999;
+        }
     </style>
 </head>
 <body>
@@ -102,27 +111,25 @@
         <button type="button" id="clear-token" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change Token</button>
     </div>
 
-    <div class="form-group">
-        <label for="command">Command</label>
-        <select id="command">
-            <option value="echo">echo</option>
-            <option value="ls">ls</option>
-            <option value="uname">uname</option>
-            <option value="whoami">whoami</option>
-        </select>
-    </div>
+    <div id="command-section" style="display: none;">
+        <div class="form-group">
+            <label for="command">Command</label>
+            <select id="command"></select>
+        </div>
 
-    <div class="form-group">
-        <label for="flags">Flags (space-separated)</label>
-        <input type="text" id="flags" placeholder="e.g. -l -a">
-    </div>
+        <div class="form-group">
+            <label for="flags">Flags (space-separated)</label>
+            <input type="text" id="flags" placeholder="">
+            <div class="helper" id="flags-helper"></div>
+        </div>
 
-    <div class="form-group">
-        <label for="args">Arguments (space-separated)</label>
-        <input type="text" id="args" placeholder="e.g. /tmp">
-    </div>
+        <div class="form-group" id="args-group">
+            <label for="args">Arguments (space-separated)</label>
+            <input type="text" id="args" placeholder="e.g. /tmp">
+        </div>
 
-    <button id="execute">Execute</button>
+        <button id="execute">Execute</button>
+    </div>
 
     <div class="error" id="error"></div>
 
@@ -139,10 +146,82 @@
         const API_URL = 'https://webify-bash-production.up.railway.app';
         const TOKEN_KEY = 'webify-bash-token';
 
+        let COMMANDS = {};
+
         const tokenSection = document.getElementById('token-section');
         const tokenSaved = document.getElementById('token-saved');
         const tokenInput = document.getElementById('token');
         const errorEl = document.getElementById('error');
+        const commandSection = document.getElementById('command-section');
+        const commandSelect = document.getElementById('command');
+        const flagsInput = document.getElementById('flags');
+        const flagsHelper = document.getElementById('flags-helper');
+        const argsInput = document.getElementById('args');
+
+        async function fetchCommands() {
+            const token = getToken();
+            if (!token) return false;
+
+            try {
+                const response = await fetch(`${API_URL}/commands`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    COMMANDS = await response.json();
+                    buildCommandSelect();
+                    updateCommandUI();
+                    commandSection.style.display = 'block';
+                    return true;
+                } else if (response.status === 401) {
+                    localStorage.removeItem(TOKEN_KEY);
+                    showTokenInput();
+                    commandSection.style.display = 'none';
+                    errorEl.textContent = 'Invalid token';
+                    return false;
+                }
+            } catch (err) {
+                console.error('Failed to fetch commands:', err);
+                errorEl.textContent = 'Failed to connect to API';
+            }
+            return false;
+        }
+
+        function buildCommandSelect() {
+            commandSelect.innerHTML = '';
+            for (const cmd of Object.keys(COMMANDS).sort()) {
+                const option = document.createElement('option');
+                option.value = cmd;
+                option.textContent = cmd;
+                commandSelect.appendChild(option);
+            }
+        }
+
+        function updateCommandUI() {
+            const cmd = commandSelect.value;
+            const config = COMMANDS[cmd];
+            if (!config) return;
+
+            // Update flags helper and placeholder
+            if (config.flags.length > 0) {
+                flagsHelper.textContent = 'Available: ' + config.flags.join(' ');
+                flagsInput.placeholder = config.flags.slice(0, 3).join(' ');
+            } else {
+                flagsHelper.textContent = 'No flags available';
+                flagsInput.placeholder = '';
+            }
+
+            // Enable/disable args
+            argsInput.disabled = !config.bare_arg;
+            if (!config.bare_arg) {
+                argsInput.value = '';
+                argsInput.placeholder = 'Not available for this command';
+            } else {
+                argsInput.placeholder = 'e.g. /tmp';
+            }
+        }
+
+        // Update UI when command changes
+        commandSelect.addEventListener('change', updateCommandUI);
 
         function showTokenInput() {
             tokenSection.style.display = 'block';
@@ -161,16 +240,20 @@
         // Check for saved token on load
         if (localStorage.getItem(TOKEN_KEY)) {
             hideTokenInput();
+            fetchCommands();
         }
 
         // Save token button
-        document.getElementById('save-token').addEventListener('click', () => {
+        document.getElementById('save-token').addEventListener('click', async () => {
             const token = tokenInput.value.trim();
             if (token) {
                 localStorage.setItem(TOKEN_KEY, token);
-                tokenInput.value = '';
-                hideTokenInput();
                 errorEl.textContent = '';
+                const success = await fetchCommands();
+                if (success) {
+                    tokenInput.value = '';
+                    hideTokenInput();
+                }
             }
         });
 
@@ -178,6 +261,7 @@
         document.getElementById('clear-token').addEventListener('click', () => {
             localStorage.removeItem(TOKEN_KEY);
             showTokenInput();
+            commandSection.style.display = 'none';
         });
 
         document.getElementById('execute').addEventListener('click', async () => {
