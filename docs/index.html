@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>webify-bash</title>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             max-width: 600px;
@@ -15,22 +13,10 @@
             padding: 20px;
             background: #f5f5f5;
         }
-        h1 {
-            margin-bottom: 5px;
-        }
-        .disclaimer {
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-        }
+        h1 { margin-bottom: 5px; }
+        .disclaimer { color: #666; font-size: 14px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
         input, select {
             width: 100%;
             padding: 10px;
@@ -47,13 +33,8 @@
             font-size: 16px;
             cursor: pointer;
         }
-        button:hover {
-            background: #0056b3;
-        }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
         .output {
             margin-top: 20px;
             background: #1e1e1e;
@@ -65,35 +46,14 @@
             word-break: break-all;
             display: none;
         }
-        .output.visible {
-            display: block;
-        }
-        .output .label {
-            color: #888;
-            font-size: 12px;
-        }
-        .output .stdout {
-            color: #98c379;
-        }
-        .output .stderr {
-            color: #e06c75;
-        }
-        .output .exit-code {
-            color: #61afef;
-        }
-        .error {
-            color: #e06c75;
-            margin-top: 10px;
-        }
-        .helper {
-            color: #666;
-            font-size: 13px;
-            margin-top: 4px;
-        }
-        input:disabled {
-            background: #e9e9e9;
-            color: #999;
-        }
+        .output.visible { display: block; }
+        .output .label { color: #888; font-size: 12px; }
+        .output .stdout { color: #98c379; }
+        .output .stderr { color: #e06c75; }
+        .output .exit-code { color: #61afef; }
+        .error { color: #e06c75; margin-top: 10px; }
+        .helper { color: #666; font-size: 13px; margin-top: 4px; }
+        input:disabled { background: #e9e9e9; color: #999; }
     </style>
 </head>
 <body>
@@ -118,13 +78,13 @@
         </div>
 
         <div class="form-group">
-            <label for="flags">Flags (space-separated)</label>
+            <label for="flags">Flags</label>
             <input type="text" id="flags" placeholder="">
             <div class="helper" id="flags-helper"></div>
         </div>
 
-        <div class="form-group" id="args-group">
-            <label for="args">Arguments (space-separated)</label>
+        <div class="form-group">
+            <label for="args">Arguments</label>
             <input type="text" id="args" placeholder="e.g. /tmp">
         </div>
 
@@ -145,18 +105,23 @@
     <script>
         const API_URL = 'https://webify-bash-production.up.railway.app';
         const TOKEN_KEY = 'webify-bash-token';
-
         let COMMANDS = {};
 
-        const tokenSection = document.getElementById('token-section');
-        const tokenSaved = document.getElementById('token-saved');
-        const tokenInput = document.getElementById('token');
-        const errorEl = document.getElementById('error');
-        const commandSection = document.getElementById('command-section');
-        const commandSelect = document.getElementById('command');
-        const flagsInput = document.getElementById('flags');
-        const flagsHelper = document.getElementById('flags-helper');
-        const argsInput = document.getElementById('args');
+        const $ = id => document.getElementById(id);
+        const tokenSection = $('token-section');
+        const tokenSaved = $('token-saved');
+        const tokenInput = $('token');
+        const errorEl = $('error');
+        const commandSection = $('command-section');
+        const commandSelect = $('command');
+        const flagsInput = $('flags');
+        const flagsHelper = $('flags-helper');
+        const argsInput = $('args');
+        const outputEl = $('output');
+
+        const getToken = () => localStorage.getItem(TOKEN_KEY) || tokenInput.value;
+        const showTokenInput = () => { tokenSection.style.display = 'block'; tokenSaved.style.display = 'none'; };
+        const hideTokenInput = () => { tokenSection.style.display = 'none'; tokenSaved.style.display = 'block'; };
 
         async function fetchCommands() {
             const token = getToken();
@@ -168,7 +133,8 @@
                 });
                 if (response.ok) {
                     COMMANDS = await response.json();
-                    buildCommandSelect();
+                    commandSelect.innerHTML = Object.keys(COMMANDS).sort()
+                        .map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
                     updateCommandUI();
                     commandSection.style.display = 'block';
                     return true;
@@ -177,31 +143,17 @@
                     showTokenInput();
                     commandSection.style.display = 'none';
                     errorEl.textContent = 'Invalid token';
-                    return false;
                 }
             } catch (err) {
-                console.error('Failed to fetch commands:', err);
                 errorEl.textContent = 'Failed to connect to API';
             }
             return false;
         }
 
-        function buildCommandSelect() {
-            commandSelect.innerHTML = '';
-            for (const cmd of Object.keys(COMMANDS).sort()) {
-                const option = document.createElement('option');
-                option.value = cmd;
-                option.textContent = cmd;
-                commandSelect.appendChild(option);
-            }
-        }
-
         function updateCommandUI() {
-            const cmd = commandSelect.value;
-            const config = COMMANDS[cmd];
+            const config = COMMANDS[commandSelect.value];
             if (!config) return;
 
-            // Update flags helper and placeholder
             if (config.flags.length > 0) {
                 flagsHelper.textContent = 'Available: ' + config.flags.join(' ');
                 flagsInput.placeholder = config.flags.slice(0, 3).join(' ');
@@ -210,67 +162,38 @@
                 flagsInput.placeholder = '';
             }
 
-            // Enable/disable args
             argsInput.disabled = !config.bare_arg;
-            if (!config.bare_arg) {
-                argsInput.value = '';
-                argsInput.placeholder = 'Not available for this command';
-            } else {
-                argsInput.placeholder = 'e.g. /tmp';
-            }
+            argsInput.placeholder = config.bare_arg ? 'e.g. /tmp' : 'Not available';
+            if (!config.bare_arg) argsInput.value = '';
         }
 
-        // Update UI when command changes
         commandSelect.addEventListener('change', updateCommandUI);
 
-        function showTokenInput() {
-            tokenSection.style.display = 'block';
-            tokenSaved.style.display = 'none';
-        }
-
-        function hideTokenInput() {
-            tokenSection.style.display = 'none';
-            tokenSaved.style.display = 'block';
-        }
-
-        function getToken() {
-            return localStorage.getItem(TOKEN_KEY) || tokenInput.value;
-        }
-
-        // Check for saved token on load
         if (localStorage.getItem(TOKEN_KEY)) {
             hideTokenInput();
             fetchCommands();
         }
 
-        // Save token button
-        document.getElementById('save-token').addEventListener('click', async () => {
+        $('save-token').addEventListener('click', async () => {
             const token = tokenInput.value.trim();
             if (token) {
                 localStorage.setItem(TOKEN_KEY, token);
                 errorEl.textContent = '';
-                const success = await fetchCommands();
-                if (success) {
+                if (await fetchCommands()) {
                     tokenInput.value = '';
                     hideTokenInput();
                 }
             }
         });
 
-        // Clear token button
-        document.getElementById('clear-token').addEventListener('click', () => {
+        $('clear-token').addEventListener('click', () => {
             localStorage.removeItem(TOKEN_KEY);
             showTokenInput();
             commandSection.style.display = 'none';
         });
 
-        document.getElementById('execute').addEventListener('click', async () => {
+        $('execute').addEventListener('click', async () => {
             const token = getToken();
-            const command = document.getElementById('command').value;
-            const flagsInput = document.getElementById('flags').value.trim();
-            const argsInput = document.getElementById('args').value.trim();
-
-            const outputEl = document.getElementById('output');
             errorEl.textContent = '';
             outputEl.classList.remove('visible');
 
@@ -280,25 +203,18 @@
                 return;
             }
 
-            const payload = { command };
-            if (flagsInput) {
-                payload.flags = flagsInput.split(/\s+/);
-            }
-            if (argsInput) {
-                payload.args = argsInput.split(/\s+/);
-            }
+            const payload = { command: commandSelect.value };
+            if (flagsInput.value.trim()) payload.flags = flagsInput.value.trim().split(/\s+/);
+            if (argsInput.value.trim()) payload.args = argsInput.value.trim().split(/\s+/);
 
-            const btn = document.getElementById('execute');
+            const btn = $('execute');
             btn.disabled = true;
             btn.textContent = 'Executing...';
 
             try {
                 const response = await fetch(`${API_URL}/execute`, {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
                 });
 
@@ -306,7 +222,6 @@
 
                 if (!response.ok) {
                     errorEl.textContent = data.detail || 'Request failed';
-                    // Show token input on auth error
                     if (response.status === 401) {
                         localStorage.removeItem(TOKEN_KEY);
                         showTokenInput();
@@ -314,10 +229,10 @@
                     return;
                 }
 
-                document.getElementById('out-cmd').textContent = data.executed_command;
-                document.getElementById('out-exit').textContent = data.return_code;
-                document.getElementById('out-stdout').textContent = data.stdout || '(empty)';
-                document.getElementById('out-stderr').textContent = data.stderr || '(empty)';
+                $('out-cmd').textContent = data.executed_command;
+                $('out-exit').textContent = data.return_code;
+                $('out-stdout').textContent = data.stdout || '(empty)';
+                $('out-stderr').textContent = data.stderr || '(empty)';
                 outputEl.classList.add('visible');
             } catch (err) {
                 errorEl.textContent = `Error: ${err.message}`;

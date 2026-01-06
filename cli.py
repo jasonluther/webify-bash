@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-"""CLI tool to invoke shell commands via the API."""
-
 import argparse
 import os
 import sys
@@ -15,7 +13,6 @@ BEARER_TOKEN = os.getenv("BEARER_TOKEN")
 
 
 def list_commands():
-    """List available commands from the API."""
     headers = {"Authorization": f"Bearer {BEARER_TOKEN}"}
     try:
         response = requests.get(f"{API_URL}/commands", headers=headers)
@@ -28,17 +25,13 @@ def list_commands():
     for cmd, config in sorted(response.json().items()):
         flags = " ".join(config["flags"]) if config["flags"] else "(none)"
         bare = "yes" if config["bare_arg"] else "no"
-        print(f"  {cmd}: flags=[{flags}] bare_args={bare}")
+        print(f"  {cmd}: flags=[{flags}] args={bare}")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Execute shell commands via the API",
-        usage="%(prog)s <command> [flags...] [args...]"
-    )
+    parser = argparse.ArgumentParser(usage="%(prog)s [command] [flags...] [args...]")
     parser.add_argument("command", nargs="?", help="Command to execute")
-    parser.add_argument("rest", nargs=argparse.REMAINDER, help="Flags and arguments")
-
+    parser.add_argument("rest", nargs=argparse.REMAINDER)
     args = parser.parse_args()
 
     if not BEARER_TOKEN:
@@ -49,28 +42,16 @@ def main():
         list_commands()
         sys.exit(0)
 
-    # Parse flags (start with -) and args (don't start with -)
-    flags = []
-    cmd_args = []
+    flags = [x for x in args.rest if x.startswith("-")]
+    cmd_args = [x for x in args.rest if not x.startswith("-")]
 
-    for item in args.rest:
-        if item.startswith("-"):
-            flags.append(item)
-        else:
-            cmd_args.append(item)
-
-    # Build request payload
     payload = {"command": args.command}
     if flags:
         payload["flags"] = flags
     if cmd_args:
         payload["args"] = cmd_args
 
-    # Make API call
-    headers = {
-        "Authorization": f"Bearer {BEARER_TOKEN}",
-        "Content-Type": "application/json",
-    }
+    headers = {"Authorization": f"Bearer {BEARER_TOKEN}", "Content-Type": "application/json"}
 
     try:
         response = requests.post(f"{API_URL}/execute", json=payload, headers=headers)
@@ -79,16 +60,12 @@ def main():
         sys.exit(1)
 
     if response.status_code != 200:
-        error = response.json().get("detail", "Unknown error")
-        print(f"Error: {error}", file=sys.stderr)
+        print(f"Error: {response.json().get('detail', 'Unknown error')}", file=sys.stderr)
         sys.exit(1)
 
     data = response.json()
-
-    # Output like the real command
     print(data["stdout"], end="")
     print(data["stderr"], end="", file=sys.stderr)
-
     sys.exit(data["return_code"])
 
 
