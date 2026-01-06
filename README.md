@@ -17,14 +17,6 @@ curl -X POST http://localhost:8000/execute \
   -d '{"command": "uname", "flags": ["-a"]}'
 ```
 
-## CLI
-
-```bash
-export BEARER_TOKEN=secret
-./cli.py              # list commands
-./cli.py ls -l /tmp   # execute command
-```
-
 ## Web UI
 
 <https://jasonluther.github.io/webify-bash/>
@@ -42,21 +34,20 @@ GET  /docs      - Interactive API docs
 Request:
 
 ```json
-{"command": "ls", "flags": ["-l"], "args": ["/tmp"]}
+{"command": "head", "flags": ["-n 5"], "args": ["/etc/hosts"]}
 ```
 
 Response:
 
 ```json
-{"executed_command": "ls -l /tmp", "return_code": 0, "stdout": "...", "stderr": ""}
+{"executed_command": "head -n 5 /etc/hosts", "return_code": 0, "stdout": "...", "stderr": ""}
 ```
 
 ## Configuration
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `BEARER_TOKEN` | Auth token (required) | - |
-| `API_URL` | API URL for CLI | `http://localhost:8000` |
+| Variable | Description |
+|----------|-------------|
+| `BEARER_TOKEN` | Auth token (required) |
 
 ## Adding Commands
 

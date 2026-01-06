@@ -7,7 +7,6 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "python-dotenv",
-    "requests",
 ]
 
 [project.optional-dependencies]
@@ -19,7 +18,7 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["app", "cli"]
+py-modules = ["app"]
 
 [tool.pytest.ini_options]
 testpaths = ["test_app.py"]

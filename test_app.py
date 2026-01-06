@@ -58,6 +58,16 @@ class TestValidateCommand:
         result = validate_command(req)
         assert result == ["ls", "-l", "-a"]
 
+    def test_flag_with_value(self):
+        req = CommandRequest(command="head", flags=["-n 5"], args=["/etc/hosts"])
+        result = validate_command(req)
+        assert result == ["head", "-n", "5", "/etc/hosts"]
+
+    def test_flag_with_value_and_simple_flag(self):
+        req = CommandRequest(command="head", flags=["-n 10", "-c 100"])
+        result = validate_command(req)
+        assert result == ["head", "-n", "10", "-c", "100"]
+
 
 class TestExecuteEndpoint:
     def test_success(self):
@@ -70,6 +80,17 @@ class TestExecuteEndpoint:
         data = response.json()
         assert data["return_code"] == 0
         assert "hello" in data["stdout"]
+
+    def test_flag_with_value(self):
+        response = client.post(
+            "/execute",
+            json={"command": "head", "flags": ["-n 1"], "args": ["/etc/hosts"]},
+            headers={"Authorization": "Bearer test-token"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["return_code"] == 0
+        assert data["executed_command"] == "head -n 1 /etc/hosts"
 
     def test_unauthorized(self):
         response = client.post(

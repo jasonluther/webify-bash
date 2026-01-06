@@ -5,7 +5,7 @@ WORKDIR /app
 COPY pyproject.toml .
 RUN pip install --no-cache-dir .
 
-COPY app.py cli.py commands.json ./
+COPY app.py commands.json ./
 
 EXPOSE 8000
 
