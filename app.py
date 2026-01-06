@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import json
 import os
 import subprocess
+from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -23,12 +25,8 @@ BEARER_TOKEN = os.getenv("BEARER_TOKEN")
 if not BEARER_TOKEN:
     raise RuntimeError("BEARER_TOKEN must be set in environment")
 
-ALLOWED_COMMANDS = {
-    "echo": {"flags": ["-n", "-e"], "bare_arg": True},
-    "ls": {"flags": ["-l", "-a", "-la", "-lh", "-alh", "-1", "-R"], "bare_arg": True},
-    "uname": {"flags": ["-a", "-s", "-n", "-r", "-v", "-m", "-p", "-o"], "bare_arg": False},
-    "whoami": {"flags": [], "bare_arg": False},
-}
+COMMANDS_FILE = Path(__file__).parent / "commands.json"
+ALLOWED_COMMANDS = json.loads(COMMANDS_FILE.read_text())
 
 
 class CommandRequest(BaseModel):

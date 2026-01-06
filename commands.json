@@ -1,0 +1,6 @@
+{
+  "echo": {"flags": ["-n", "-e"], "bare_arg": true},
+  "ls": {"flags": ["-l", "-a", "-la", "-lh", "-alh", "-1", "-R"], "bare_arg": true},
+  "uname": {"flags": ["-a", "-s", "-n", "-r", "-v", "-m", "-p", "-o"], "bare_arg": false},
+  "whoami": {"flags": [], "bare_arg": false}
+}
