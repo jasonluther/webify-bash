@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>webify-bash</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            margin-bottom: 5px;
+        }
+        .disclaimer {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .output {
+            margin-top: 20px;
+            background: #1e1e1e;
+            color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+        .output.visible {
+            display: block;
+        }
+        .output .label {
+            color: #888;
+            font-size: 12px;
+        }
+        .output .stdout {
+            color: #98c379;
+        }
+        .output .stderr {
+            color: #e06c75;
+        }
+        .output .exit-code {
+            color: #61afef;
+        }
+        .error {
+            color: #e06c75;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>webify-bash</h1>
+    <p class="disclaimer">Demonstration only. Not for production use.</p>
+
+    <div class="form-group">
+        <label for="token">Bearer Token</label>
+        <input type="password" id="token" placeholder="Enter your token">
+    </div>
+
+    <div class="form-group">
+        <label for="command">Command</label>
+        <select id="command">
+            <option value="echo">echo</option>
+            <option value="ls">ls</option>
+            <option value="uname">uname</option>
+            <option value="whoami">whoami</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label for="flags">Flags (space-separated)</label>
+        <input type="text" id="flags" placeholder="e.g. -l -a">
+    </div>
+
+    <div class="form-group">
+        <label for="args">Arguments (space-separated)</label>
+        <input type="text" id="args" placeholder="e.g. /tmp">
+    </div>
+
+    <button id="execute">Execute</button>
+
+    <div class="error" id="error"></div>
+
+    <div class="output" id="output">
+        <div><span class="label">Command:</span> <span id="out-cmd"></span></div>
+        <div><span class="label">Exit code:</span> <span class="exit-code" id="out-exit"></span></div>
+        <div><span class="label">stdout:</span></div>
+        <div class="stdout" id="out-stdout"></div>
+        <div><span class="label">stderr:</span></div>
+        <div class="stderr" id="out-stderr"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://webify-bash-production.up.railway.app';
+
+        document.getElementById('execute').addEventListener('click', async () => {
+            const token = document.getElementById('token').value;
+            const command = document.getElementById('command').value;
+            const flagsInput = document.getElementById('flags').value.trim();
+            const argsInput = document.getElementById('args').value.trim();
+
+            const errorEl = document.getElementById('error');
+            const outputEl = document.getElementById('output');
+            errorEl.textContent = '';
+            outputEl.classList.remove('visible');
+
+            if (!token) {
+                errorEl.textContent = 'Bearer token is required';
+                return;
+            }
+
+            const payload = { command };
+            if (flagsInput) {
+                payload.flags = flagsInput.split(/\s+/);
+            }
+            if (argsInput) {
+                payload.args = argsInput.split(/\s+/);
+            }
+
+            const btn = document.getElementById('execute');
+            btn.disabled = true;
+            btn.textContent = 'Executing...';
+
+            try {
+                const response = await fetch(`${API_URL}/execute`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    errorEl.textContent = data.detail || 'Request failed';
+                    return;
+                }
+
+                document.getElementById('out-cmd').textContent = data.executed_command;
+                document.getElementById('out-exit').textContent = data.return_code;
+                document.getElementById('out-stdout').textContent = data.stdout || '(empty)';
+                document.getElementById('out-stderr').textContent = data.stderr || '(empty)';
+                outputEl.classList.add('visible');
+            } catch (err) {
+                errorEl.textContent = `Error: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Execute';
+            }
+        });
+    </script>
+</body>
+</html>

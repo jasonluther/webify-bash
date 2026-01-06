@@ -7,11 +7,19 @@ from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 load_dotenv()
 
 app = FastAPI(title="Shell Command API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://jasonluther.github.io"],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Authorization", "Content-Type"],
+)
 
 BEARER_TOKEN = os.getenv("BEARER_TOKEN")
 if not BEARER_TOKEN:
