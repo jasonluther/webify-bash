@@ -54,8 +54,10 @@ def validate_command(req: CommandRequest) -> list[str]:
 
     if req.flags:
         for flag in req.flags:
+            if not flag or not flag.strip():
+                continue
             flag_parts = flag.split(None, 1)
-            if flag_parts[0] not in cmd_config["flags"]:
+            if not flag_parts or flag_parts[0] not in cmd_config["flags"]:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Flag '{flag_parts[0]}' is not allowed for command '{req.command}'",
@@ -74,7 +76,7 @@ def validate_command(req: CommandRequest) -> list[str]:
 
 
 @app.post("/execute", response_model=CommandResponse)
-def execute_command(request: CommandRequest, authorization: str = Header(...)):
+def execute_command(request: CommandRequest, authorization: str = Header(...)) -> CommandResponse:
     if not verify_token(authorization):
         raise HTTPException(status_code=401, detail="Invalid or missing bearer token")
 
@@ -86,7 +88,7 @@ def execute_command(request: CommandRequest, authorization: str = Header(...)):
         )
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=408, detail="Command timed out") from None
-    except Exception:
+    except (OSError, subprocess.SubprocessError):
         logger.exception("Command execution failed")
         raise HTTPException(status_code=500, detail="Command execution failed") from None
 
@@ -99,10 +101,15 @@ def execute_command(request: CommandRequest, authorization: str = Header(...)):
 
 
 @app.get("/commands")
-def list_commands(authorization: str = Header(...)):
+def list_commands(authorization: str = Header(...)) -> dict:
     if not verify_token(authorization):
         raise HTTPException(status_code=401, detail="Invalid or missing bearer token")
     return ALLOWED_COMMANDS
+
+
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok"}
 
 
 if __name__ == "__main__":

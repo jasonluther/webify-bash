@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -48,13 +49,18 @@ def start_container(runtime: str, image: str, build: bool = False) -> None:
         run_cmd([runtime, "pull", image])
 
     # Write env file to avoid exposing secrets in process list
+    # Use os.open with O_CREAT|O_EXCL to create file atomically with restricted permissions
     env_content = f"""BEARER_TOKEN={config.BEARER_TOKEN}
 COMMAND_TIMEOUT={config.COMMAND_TIMEOUT}
 ALLOWED_ORIGINS={",".join(config.ALLOWED_ORIGINS)}
 """
     env_file = Path(tempfile.gettempdir()) / f".webify-bash-{config.CONTAINER_NAME}.env"
-    env_file.write_text(env_content)
-    env_file.chmod(0o600)
+    env_file.unlink(missing_ok=True)  # Remove if exists from previous run
+    fd = os.open(env_file, os.O_CREAT | os.O_WRONLY, 0o600)
+    try:
+        os.write(fd, env_content.encode())
+    finally:
+        os.close(fd)
 
     cmd = [
         runtime,
