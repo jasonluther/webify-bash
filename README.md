@@ -61,7 +61,7 @@ Response:
 ## Configuration
 
 ```bash
-echo "BEARER_TOKEN=your-secret" > .env
+python3 -c "import secrets; print(f'BEARER_TOKEN={secrets.token_hex(16)}')" > .env
 ```
 
 Defaults are in `defaults.env`. Override any setting in `.env`.
