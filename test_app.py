@@ -1,6 +1,5 @@
 import os
 import pytest
-from unittest.mock import patch
 
 os.environ["BEARER_TOKEN"] = "test-token"
 
@@ -65,7 +64,7 @@ class TestExecuteEndpoint:
         response = client.post(
             "/execute",
             json={"command": "echo", "args": ["hello"]},
-            headers={"Authorization": "Bearer test-token"}
+            headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -76,7 +75,7 @@ class TestExecuteEndpoint:
         response = client.post(
             "/execute",
             json={"command": "whoami"},
-            headers={"Authorization": "Bearer wrong"}
+            headers={"Authorization": "Bearer wrong"},
         )
         assert response.status_code == 401
 
@@ -88,7 +87,7 @@ class TestExecuteEndpoint:
         response = client.post(
             "/execute",
             json={"command": "rm", "args": ["-rf", "/"]},
-            headers={"Authorization": "Bearer test-token"}
+            headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == 400
 
@@ -112,7 +111,9 @@ class TestCommandsJsonSchema:
 
     def test_bare_arg_is_boolean(self):
         for cmd, config in ALLOWED_COMMANDS.items():
-            assert isinstance(config["bare_arg"], bool), f"{cmd} bare_arg must be boolean"
+            assert isinstance(
+                config["bare_arg"], bool
+            ), f"{cmd} bare_arg must be boolean"
 
     def test_command_names_are_valid(self):
         for cmd in ALLOWED_COMMANDS.keys():
@@ -124,8 +125,7 @@ class TestCommandsJsonSchema:
 class TestCommandsEndpoint:
     def test_list_commands(self):
         response = client.get(
-            "/commands",
-            headers={"Authorization": "Bearer test-token"}
+            "/commands", headers={"Authorization": "Bearer test-token"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -134,8 +134,5 @@ class TestCommandsEndpoint:
         assert data["ls"]["bare_arg"] is True
 
     def test_unauthorized(self):
-        response = client.get(
-            "/commands",
-            headers={"Authorization": "Bearer wrong"}
-        )
+        response = client.get("/commands", headers={"Authorization": "Bearer wrong"})
         assert response.status_code == 401

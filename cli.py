@@ -51,7 +51,10 @@ def main():
     if cmd_args:
         payload["args"] = cmd_args
 
-    headers = {"Authorization": f"Bearer {BEARER_TOKEN}", "Content-Type": "application/json"}
+    headers = {
+        "Authorization": f"Bearer {BEARER_TOKEN}",
+        "Content-Type": "application/json",
+    }
 
     try:
         response = requests.post(f"{API_URL}/execute", json=payload, headers=headers)
@@ -60,7 +63,9 @@ def main():
         sys.exit(1)
 
     if response.status_code != 200:
-        print(f"Error: {response.json().get('detail', 'Unknown error')}", file=sys.stderr)
+        print(
+            f"Error: {response.json().get('detail', 'Unknown error')}", file=sys.stderr
+        )
         sys.exit(1)
 
     data = response.json()

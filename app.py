@@ -50,7 +50,9 @@ def verify_token(authorization: str) -> bool:
 
 def validate_command(req: CommandRequest) -> list[str]:
     if req.command not in ALLOWED_COMMANDS:
-        raise HTTPException(status_code=400, detail=f"Command '{req.command}' is not allowed")
+        raise HTTPException(
+            status_code=400, detail=f"Command '{req.command}' is not allowed"
+        )
 
     config = ALLOWED_COMMANDS[req.command]
     cmd_list = [req.command]
@@ -61,7 +63,7 @@ def validate_command(req: CommandRequest) -> list[str]:
             if flag_parts[0] not in config["flags"]:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Flag '{flag_parts[0]}' is not allowed for command '{req.command}'"
+                    detail=f"Flag '{flag_parts[0]}' is not allowed for command '{req.command}'",
                 )
             cmd_list.extend(flag_parts)
 
@@ -69,7 +71,7 @@ def validate_command(req: CommandRequest) -> list[str]:
         if not config["bare_arg"]:
             raise HTTPException(
                 status_code=400,
-                detail=f"Command '{req.command}' does not accept arguments"
+                detail=f"Command '{req.command}' does not accept arguments",
             )
         cmd_list.extend(req.args)
 
@@ -77,10 +79,7 @@ def validate_command(req: CommandRequest) -> list[str]:
 
 
 @app.post("/execute", response_model=CommandResponse)
-def execute_command(
-    request: CommandRequest,
-    authorization: str = Header(...)
-):
+def execute_command(request: CommandRequest, authorization: str = Header(...)):
     if not verify_token(authorization):
         raise HTTPException(status_code=401, detail="Invalid or missing bearer token")
 
@@ -110,4 +109,5 @@ def list_commands(authorization: str = Header(...)):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

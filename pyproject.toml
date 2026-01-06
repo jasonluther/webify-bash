@@ -15,6 +15,7 @@ dev = [
     "pytest",
     "httpx",
     "pre-commit",
+    "ruff",
 ]
 
 [tool.setuptools]
