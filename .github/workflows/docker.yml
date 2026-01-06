@@ -1,0 +1,24 @@
+name: Build Docker Image
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t webify-bash .
+
+      - name: Test container starts
+        run: |
+          docker run -d --name test -p 8000:8000 -e BEARER_TOKEN=test webify-bash
+          sleep 3
+          curl -f http://localhost:8000/commands -H "Authorization: Bearer test"
+          docker stop test
