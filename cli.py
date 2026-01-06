@@ -37,7 +37,7 @@ def main():
         usage="%(prog)s <command> [flags...] [args...]"
     )
     parser.add_argument("command", nargs="?", help="Command to execute")
-    parser.add_argument("rest", nargs="*", help="Flags and arguments")
+    parser.add_argument("rest", nargs=argparse.REMAINDER, help="Flags and arguments")
 
     args = parser.parse_args()
 
