@@ -53,10 +53,8 @@
         }
         .output.visible { display: block; }
         .output .label { color: #a0a0a0; font-size: 12px; }
-        .output .stdout { color: #98c379; }
-        .output .stdout::before { content: "[stdout] "; color: #a0a0a0; }
-        .output .stderr { color: #e06c75; }
-        .output .stderr::before { content: "[stderr] "; color: #a0a0a0; }
+        .output .stdout { color: #98c379; margin-top: 8px; }
+        .output .stderr { color: #e06c75; margin-top: 8px; }
         .output .exit-code { color: #61afef; }
         .error { color: #c92a2a; margin-top: 10px; font-weight: 500; }
         .helper { color: #595959; font-size: 13px; margin-top: 4px; }
@@ -114,9 +112,7 @@
     <div class="output" id="output">
         <div><span class="label">Command:</span> <span id="out-cmd"></span></div>
         <div><span class="label">Exit code:</span> <span class="exit-code" id="out-exit"></span></div>
-        <div><span class="label">stdout:</span></div>
         <div class="stdout" id="out-stdout"></div>
-        <div><span class="label">stderr:</span></div>
         <div class="stderr" id="out-stderr"></div>
     </div>
 
@@ -297,8 +293,8 @@
 
                 $('out-cmd').textContent = data.executed_command;
                 $('out-exit').textContent = data.return_code;
-                $('out-stdout').textContent = data.stdout || '(empty)';
-                $('out-stderr').textContent = data.stderr || '(empty)';
+                $('out-stdout').textContent = data.stdout || '';
+                $('out-stderr').textContent = data.stderr || '';
                 outputEl.classList.add('visible');
             } catch (err) {
                 errorEl.textContent = `Error: ${err.message}`;
