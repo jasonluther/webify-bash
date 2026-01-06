@@ -27,24 +27,26 @@ export BEARER_TOKEN=secret
 
 ## Web UI
 
-https://jasonluther.github.io/webify-bash/
+<https://jasonluther.github.io/webify-bash/>
 
 To enable for your fork: Settings → Pages → Branch: `main`, folder: `/docs`
 
 ## API
 
-```
+```text
 POST /execute   - Execute a command
 GET  /commands  - List allowed commands
 GET  /docs      - Interactive API docs
 ```
 
 Request:
+
 ```json
 {"command": "ls", "flags": ["-l"], "args": ["/tmp"]}
 ```
 
 Response:
+
 ```json
 {"executed_command": "ls -l /tmp", "return_code": 0, "stdout": "...", "stderr": ""}
 ```
