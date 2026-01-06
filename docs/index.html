@@ -59,32 +59,35 @@
         .error { color: #c92a2a; margin-top: 10px; font-weight: 500; }
         .helper { color: #595959; font-size: 13px; margin-top: 4px; }
         input:disabled { background: #e9e9e9; color: #767676; }
+        #settings.bottom { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body>
     <h1>webify-bash</h1>
     <p class="disclaimer">Demonstration only. Not for production use.</p>
 
-    <div class="form-group" id="api-url-section">
-        <label for="api-url">API URL</label>
-        <input type="text" id="api-url" placeholder="https://your-api-url.com">
-        <button type="button" id="save-api-url" style="margin-top: 8px;">Save URL</button>
-    </div>
+    <div id="settings">
+        <div class="form-group" id="api-url-section">
+            <label for="api-url">API URL</label>
+            <input type="text" id="api-url" placeholder="https://your-api-url.com">
+            <button type="button" id="save-api-url" style="margin-top: 8px;">Save URL</button>
+        </div>
 
-    <div class="form-group" id="api-url-saved" style="display: none;">
-        <span style="color: #28a745;">API: <span id="api-url-display"></span></span>
-        <button type="button" id="clear-api-url" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change URL</button>
-    </div>
+        <div class="form-group" id="api-url-saved" style="display: none;">
+            <span style="color: #595959;">API: <span id="api-url-display"></span></span>
+            <button type="button" id="clear-api-url" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change</button>
+        </div>
 
-    <div class="form-group" id="token-section" style="display: none;">
-        <label for="token">Bearer Token</label>
-        <input type="password" id="token" placeholder="Enter your token">
-        <button type="button" id="save-token" style="margin-top: 8px;">Save Token</button>
-    </div>
+        <div class="form-group" id="token-section" style="display: none;">
+            <label for="token">Bearer Token</label>
+            <input type="password" id="token" placeholder="Enter your token">
+            <button type="button" id="save-token" style="margin-top: 8px;">Save Token</button>
+        </div>
 
-    <div class="form-group" id="token-saved" style="display: none;">
-        <span style="color: #28a745;">Token saved</span>
-        <button type="button" id="clear-token" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change Token</button>
+        <div class="form-group" id="token-saved" style="display: none;">
+            <span style="color: #595959;">Token saved</span>
+            <button type="button" id="clear-token" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change</button>
+        </div>
     </div>
 
     <div id="command-section" style="display: none;">
@@ -119,6 +122,7 @@
         let COMMANDS = {};
 
         const $ = id => document.getElementById(id);
+        const settings = $('settings');
         const apiUrlSection = $('api-url-section');
         const apiUrlSaved = $('api-url-saved');
         const apiUrlInput = $('api-url');
@@ -133,13 +137,16 @@
         const flagsHelper = $('flags-helper');
         const argsInput = $('args');
         const outputEl = $('output');
+        const disclaimer = document.querySelector('.disclaimer');
 
         const getApiUrl = () => localStorage.getItem(API_URL_KEY) || DEFAULT_API_URL;
         const getToken = () => localStorage.getItem(TOKEN_KEY) || tokenInput.value;
-        const showApiUrlInput = () => { apiUrlSection.style.display = 'block'; apiUrlSaved.style.display = 'none'; tokenSection.style.display = 'none'; };
+        const moveSettingsTop = () => { disclaimer.after(settings); settings.classList.remove('bottom'); };
+        const moveSettingsBottom = () => { document.body.appendChild(settings); settings.classList.add('bottom'); };
+        const showApiUrlInput = () => { apiUrlSection.style.display = 'block'; apiUrlSaved.style.display = 'none'; tokenSection.style.display = 'none'; moveSettingsTop(); };
         const hideApiUrlInput = () => { apiUrlSection.style.display = 'none'; apiUrlSaved.style.display = 'block'; apiUrlDisplay.textContent = getApiUrl(); };
-        const showTokenInput = () => { tokenSection.style.display = 'block'; tokenSaved.style.display = 'none'; };
-        const hideTokenInput = () => { tokenSection.style.display = 'none'; tokenSaved.style.display = 'block'; };
+        const showTokenInput = () => { tokenSection.style.display = 'block'; tokenSaved.style.display = 'none'; moveSettingsTop(); };
+        const hideTokenInput = () => { tokenSection.style.display = 'none'; tokenSaved.style.display = 'block'; moveSettingsBottom(); };
 
         async function fetchCommands() {
             const token = getToken();
