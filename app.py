@@ -20,63 +20,19 @@ if not BEARER_TOKEN:
 # Command whitelist configuration
 # Format: "command": {"flags": [allowed flags], "bare_arg": bool}
 ALLOWED_COMMANDS = {
-    "ls": {
-        "flags": ["-l", "-a", "-la", "-lh", "-alh", "-1", "-R"],
-        "bare_arg": True,  # allows: ls /path
-    },
-    "cat": {
-        "flags": ["-n", "-b"],
-        "bare_arg": True,  # allows: cat file.txt
-    },
     "echo": {
         "flags": ["-n", "-e"],
         "bare_arg": True,
     },
-    "pwd": {
-        "flags": [],
+    "ls": {
+        "flags": ["-l", "-a", "-la", "-lh", "-alh", "-1", "-R"],
+        "bare_arg": True,
+    },
+    "uname": {
+        "flags": ["-a", "-s", "-n", "-r", "-v", "-m", "-p", "-o"],
         "bare_arg": False,
     },
     "whoami": {
-        "flags": [],
-        "bare_arg": False,
-    },
-    "date": {
-        "flags": ["-u", "-R", "-I"],
-        "bare_arg": False,
-    },
-    "head": {
-        "flags": ["-n"],
-        "bare_arg": True,
-    },
-    "tail": {
-        "flags": ["-n", "-f"],
-        "bare_arg": True,
-    },
-    "wc": {
-        "flags": ["-l", "-w", "-c", "-m"],
-        "bare_arg": True,
-    },
-    "grep": {
-        "flags": ["-i", "-v", "-n", "-c", "-l", "-r", "-E"],
-        "bare_arg": True,  # pattern and files
-    },
-    "find": {
-        "flags": ["-name", "-type", "-maxdepth"],
-        "bare_arg": True,
-    },
-    "df": {
-        "flags": ["-h", "-k", "-m"],
-        "bare_arg": True,
-    },
-    "du": {
-        "flags": ["-h", "-s", "-k"],
-        "bare_arg": True,
-    },
-    "ps": {
-        "flags": ["-e", "-f", "-u", "-aux"],
-        "bare_arg": False,
-    },
-    "uptime": {
         "flags": [],
         "bare_arg": False,
     },
