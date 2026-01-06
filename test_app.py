@@ -1,12 +1,13 @@
 import os
+
 import pytest
 
 os.environ["BEARER_TOKEN"] = "test-token"
 
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
-from app import app, verify_token, validate_command, CommandRequest, ALLOWED_COMMANDS
 
+from app import ALLOWED_COMMANDS, CommandRequest, app, validate_command, verify_token
 
 client = TestClient(app)
 
@@ -65,9 +66,7 @@ class TestValidateCommand:
         assert result == ["./demo.sh", "-n", "5", "-m", "hello"]
 
     def test_flag_with_value_and_simple_flag(self):
-        req = CommandRequest(
-            command="./demo.sh", flags=["--count 3", "--message test", "-u"]
-        )
+        req = CommandRequest(command="./demo.sh", flags=["--count 3", "--message test", "-u"])
         result = validate_command(req)
         assert result == ["./demo.sh", "--count", "3", "--message", "test", "-u"]
 
@@ -136,28 +135,22 @@ class TestCommandsJsonSchema:
 
     def test_bare_arg_is_boolean(self):
         for cmd, config in ALLOWED_COMMANDS.items():
-            assert isinstance(
-                config["bare_arg"], bool
-            ), f"{cmd} bare_arg must be boolean"
+            assert isinstance(config["bare_arg"], bool), f"{cmd} bare_arg must be boolean"
 
     def test_command_names_are_valid(self):
-        for cmd in ALLOWED_COMMANDS.keys():
+        for cmd in ALLOWED_COMMANDS:
             assert cmd, "Command name cannot be empty"
             assert " " not in cmd, f"Command '{cmd}' cannot contain spaces"
             # Allow ./ prefix for local scripts, but no other path traversal
             if cmd.startswith("./"):
-                assert (
-                    "/" not in cmd[2:]
-                ), f"Command '{cmd}' cannot contain path traversal"
+                assert "/" not in cmd[2:], f"Command '{cmd}' cannot contain path traversal"
             else:
                 assert "/" not in cmd, f"Command '{cmd}' cannot contain '/'"
 
 
 class TestCommandsEndpoint:
     def test_list_commands(self):
-        response = client.get(
-            "/commands", headers={"Authorization": "Bearer test-token"}
-        )
+        response = client.get("/commands", headers={"Authorization": "Bearer test-token"})
         assert response.status_code == 200
         data = response.json()
         assert "./demo.sh" in data

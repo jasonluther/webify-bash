@@ -3,6 +3,8 @@ import argparse
 import shutil
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
 
 from config import config
 
@@ -45,6 +47,15 @@ def start_container(runtime: str, image: str, build: bool = False) -> None:
     if image == config.GHCR_IMAGE:
         run_cmd([runtime, "pull", image])
 
+    # Write env file to avoid exposing secrets in process list
+    env_content = f"""BEARER_TOKEN={config.BEARER_TOKEN}
+COMMAND_TIMEOUT={config.COMMAND_TIMEOUT}
+ALLOWED_ORIGINS={",".join(config.ALLOWED_ORIGINS)}
+"""
+    env_file = Path(tempfile.gettempdir()) / f".webify-bash-{config.CONTAINER_NAME}.env"
+    env_file.write_text(env_content)
+    env_file.chmod(0o600)
+
     cmd = [
         runtime,
         "run",
@@ -53,16 +64,15 @@ def start_container(runtime: str, image: str, build: bool = False) -> None:
         config.CONTAINER_NAME,
         "-p",
         f"{config.PORT}:8000",
-        "-e",
-        f"BEARER_TOKEN={config.BEARER_TOKEN}",
-        "-e",
-        f"COMMAND_TIMEOUT={config.COMMAND_TIMEOUT}",
-        "-e",
-        f"ALLOWED_ORIGINS={','.join(config.ALLOWED_ORIGINS)}",
+        "--env-file",
+        str(env_file),
         image,
     ]
     print(f"Starting container at http://localhost:{config.PORT}")
-    run_cmd(cmd)
+    try:
+        run_cmd(cmd)
+    finally:
+        env_file.unlink(missing_ok=True)
 
 
 def stop_container(runtime: str) -> None:

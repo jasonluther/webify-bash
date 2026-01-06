@@ -16,9 +16,7 @@ class Config:
     HOST: str = os.environ["HOST"]
     COMMAND_TIMEOUT: int = int(os.environ["COMMAND_TIMEOUT"])
     ALLOWED_ORIGINS: list[str] = [
-        origin.strip()
-        for origin in os.environ["ALLOWED_ORIGINS"].split(",")
-        if origin.strip()
+        origin.strip() for origin in os.environ["ALLOWED_ORIGINS"].split(",") if origin.strip()
     ]
     CONTAINER_NAME: str = os.environ["CONTAINER_NAME"]
     LOCAL_IMAGE_NAME: str = os.environ["LOCAL_IMAGE_NAME"]

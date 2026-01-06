@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
+import hmac
 import json
+import logging
 import subprocess
-from typing import Optional
 
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from config import config
 
 config.validate()
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Shell Command API")
 
@@ -25,8 +28,8 @@ ALLOWED_COMMANDS = json.loads(config.COMMANDS_FILE.read_text())
 
 class CommandRequest(BaseModel):
     command: str
-    flags: Optional[list[str]] = None
-    args: Optional[list[str]] = None
+    flags: list[str] | None = None
+    args: list[str] | None = None
 
 
 class CommandResponse(BaseModel):
@@ -39,14 +42,12 @@ class CommandResponse(BaseModel):
 def verify_token(authorization: str) -> bool:
     if not authorization.startswith("Bearer "):
         return False
-    return authorization[7:] == config.BEARER_TOKEN
+    return hmac.compare_digest(authorization[7:], config.BEARER_TOKEN)
 
 
 def validate_command(req: CommandRequest) -> list[str]:
     if req.command not in ALLOWED_COMMANDS:
-        raise HTTPException(
-            status_code=400, detail=f"Command '{req.command}' is not allowed"
-        )
+        raise HTTPException(status_code=400, detail=f"Command '{req.command}' is not allowed")
 
     cmd_config = ALLOWED_COMMANDS[req.command]
     cmd_list = [req.command]
@@ -84,9 +85,10 @@ def execute_command(request: CommandRequest, authorization: str = Header(...)):
             cmd_list, capture_output=True, text=True, timeout=config.COMMAND_TIMEOUT
         )
     except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="Command timed out")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=408, detail="Command timed out") from None
+    except Exception:
+        logger.exception("Command execution failed")
+        raise HTTPException(status_code=500, detail="Command execution failed") from None
 
     return CommandResponse(
         executed_command=" ".join(cmd_list),

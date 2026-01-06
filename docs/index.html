@@ -60,7 +60,18 @@
     <h1>webify-bash</h1>
     <p class="disclaimer">Demonstration only. Not for production use.</p>
 
-    <div class="form-group" id="token-section">
+    <div class="form-group" id="api-url-section">
+        <label for="api-url">API URL</label>
+        <input type="text" id="api-url" placeholder="https://your-api-url.com">
+        <button type="button" id="save-api-url" style="margin-top: 8px;">Save URL</button>
+    </div>
+
+    <div class="form-group" id="api-url-saved" style="display: none;">
+        <span style="color: #28a745;">API: <span id="api-url-display"></span></span>
+        <button type="button" id="clear-api-url" style="margin-left: 10px; background: #6c757d; padding: 6px 12px; font-size: 14px;">Change URL</button>
+    </div>
+
+    <div class="form-group" id="token-section" style="display: none;">
         <label for="token">Bearer Token</label>
         <input type="password" id="token" placeholder="Enter your token">
         <button type="button" id="save-token" style="margin-top: 8px;">Save Token</button>
@@ -103,11 +114,16 @@
     </div>
 
     <script>
-        const API_URL = 'https://webify-bash-production.up.railway.app';
+        const DEFAULT_API_URL = 'https://webify-bash-production.up.railway.app';
+        const API_URL_KEY = 'webify-bash-api-url';
         const TOKEN_KEY = 'webify-bash-token';
         let COMMANDS = {};
 
         const $ = id => document.getElementById(id);
+        const apiUrlSection = $('api-url-section');
+        const apiUrlSaved = $('api-url-saved');
+        const apiUrlInput = $('api-url');
+        const apiUrlDisplay = $('api-url-display');
         const tokenSection = $('token-section');
         const tokenSaved = $('token-saved');
         const tokenInput = $('token');
@@ -119,22 +135,31 @@
         const argsInput = $('args');
         const outputEl = $('output');
 
+        const getApiUrl = () => localStorage.getItem(API_URL_KEY) || DEFAULT_API_URL;
         const getToken = () => localStorage.getItem(TOKEN_KEY) || tokenInput.value;
+        const showApiUrlInput = () => { apiUrlSection.style.display = 'block'; apiUrlSaved.style.display = 'none'; tokenSection.style.display = 'none'; };
+        const hideApiUrlInput = () => { apiUrlSection.style.display = 'none'; apiUrlSaved.style.display = 'block'; apiUrlDisplay.textContent = getApiUrl(); };
         const showTokenInput = () => { tokenSection.style.display = 'block'; tokenSaved.style.display = 'none'; };
         const hideTokenInput = () => { tokenSection.style.display = 'none'; tokenSaved.style.display = 'block'; };
 
         async function fetchCommands() {
             const token = getToken();
+            const apiUrl = getApiUrl();
             if (!token) return false;
 
             try {
-                const response = await fetch(`${API_URL}/commands`, {
+                const response = await fetch(`${apiUrl}/commands`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (response.ok) {
                     COMMANDS = await response.json();
-                    commandSelect.innerHTML = Object.keys(COMMANDS).sort()
-                        .map(cmd => `<option value="${cmd}">${cmd}</option>`).join('');
+                    commandSelect.innerHTML = '';
+                    Object.keys(COMMANDS).sort().forEach(cmd => {
+                        const opt = document.createElement('option');
+                        opt.value = cmd;
+                        opt.textContent = cmd;
+                        commandSelect.appendChild(opt);
+                    });
                     updateCommandUI();
                     commandSection.style.display = 'block';
                     return true;
@@ -169,10 +194,38 @@
 
         commandSelect.addEventListener('change', updateCommandUI);
 
-        if (localStorage.getItem(TOKEN_KEY)) {
-            hideTokenInput();
-            fetchCommands();
+        // Initialize API URL input with default
+        apiUrlInput.value = DEFAULT_API_URL;
+
+        // Check if API URL is already saved
+        if (localStorage.getItem(API_URL_KEY)) {
+            hideApiUrlInput();
+            // Check if token is saved
+            if (localStorage.getItem(TOKEN_KEY)) {
+                hideTokenInput();
+                fetchCommands();
+            } else {
+                showTokenInput();
+            }
         }
+
+        $('save-api-url').addEventListener('click', () => {
+            const url = apiUrlInput.value.trim();
+            if (url) {
+                localStorage.setItem(API_URL_KEY, url);
+                errorEl.textContent = '';
+                hideApiUrlInput();
+                showTokenInput();
+            }
+        });
+
+        $('clear-api-url').addEventListener('click', () => {
+            localStorage.removeItem(API_URL_KEY);
+            localStorage.removeItem(TOKEN_KEY);
+            showApiUrlInput();
+            commandSection.style.display = 'none';
+            tokenSaved.style.display = 'none';
+        });
 
         $('save-token').addEventListener('click', async () => {
             const token = tokenInput.value.trim();
@@ -194,6 +247,7 @@
 
         $('execute').addEventListener('click', async () => {
             const token = getToken();
+            const apiUrl = getApiUrl();
             errorEl.textContent = '';
             outputEl.classList.remove('visible');
 
@@ -204,7 +258,7 @@
             }
 
             const payload = { command: commandSelect.value };
-            if (flagsInput.value.trim()) payload.flags = flagsInput.value.trim().split(/\s+/);
+            if (flagsInput.value.trim()) payload.flags = flagsInput.value.trim().split(/\s+(?=-)/);
             if (argsInput.value.trim()) payload.args = argsInput.value.trim().split(/\s+/);
 
             const btn = $('execute');
@@ -212,7 +266,7 @@
             btn.textContent = 'Executing...';
 
             try {
-                const response = await fetch(`${API_URL}/execute`, {
+                const response = await fetch(`${apiUrl}/execute`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload),
