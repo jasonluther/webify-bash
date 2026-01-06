@@ -68,7 +68,7 @@ cp .env.example .env
 Defaults are in `defaults.env`. Override any setting in your `.env` file.
 
 | Variable | Description |
-|----------|-------------|
+| ---------- | ------------- |
 | `BEARER_TOKEN` | Auth token (required) |
 | `PORT` | Server port |
 | `HOST` | Server bind address |

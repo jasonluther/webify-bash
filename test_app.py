@@ -3,6 +3,7 @@ import pytest
 
 os.environ["BEARER_TOKEN"] = "test-token"
 
+from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from app import app, verify_token, validate_command, CommandRequest, ALLOWED_COMMANDS
 
@@ -37,19 +38,19 @@ class TestValidateCommand:
 
     def test_invalid_command(self):
         req = CommandRequest(command="rm")
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(HTTPException) as exc:
             validate_command(req)
         assert "not allowed" in str(exc.value.detail)
 
     def test_invalid_flag(self):
         req = CommandRequest(command="echo", flags=["--delete"])
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(HTTPException) as exc:
             validate_command(req)
         assert "not allowed" in str(exc.value.detail)
 
     def test_args_not_allowed(self):
         req = CommandRequest(command="whoami", args=["/tmp"])
-        with pytest.raises(Exception) as exc:
+        with pytest.raises(HTTPException) as exc:
             validate_command(req)
         assert "does not accept arguments" in str(exc.value.detail)
 
