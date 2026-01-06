@@ -1,4 +1,4 @@
-name: Build Docker Image
+name: CI
 
 on:
   push:
@@ -11,7 +11,23 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install .[dev]
+
+      - name: Run tests
+        run: pytest -v
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     permissions:
       contents: read

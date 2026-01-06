@@ -1,0 +1,21 @@
+[project]
+name = "webify-bash"
+version = "0.1.0"
+description = "HTTP API for executing whitelisted shell commands"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "python-dotenv",
+    "requests",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+    "pre-commit",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["test_app.py"]
