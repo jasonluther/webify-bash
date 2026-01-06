@@ -3,7 +3,7 @@
 #
 # Usage: ./container-cli.sh <command> [flags...] [args...]
 #        ./container-cli.sh ls -l /tmp
-#        ./container-cli.sh cat /etc/hostname
+#        ./container-cli.sh uname -a
 #
 # Requires: API_URL and BEARER_TOKEN in .env or environment
 
