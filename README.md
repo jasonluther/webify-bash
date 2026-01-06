@@ -125,6 +125,15 @@ GET /commands
 Authorization: Bearer <token>
 ```
 
+### curl example
+
+```bash
+curl -X POST https://webify-bash-production.up.railway.app/execute \
+  -H "Authorization: Bearer YOUR-TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "uname", "flags": ["-a"]}'
+```
+
 ### API Docs
 
 Interactive docs available at `/docs` when the server is running.
