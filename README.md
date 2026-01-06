@@ -2,7 +2,7 @@
 
 > **Disclaimer**: Demonstration only. Not for production use.
 
-HTTP API for executing whitelisted shell commands. Built with FastAPI.
+HTTP API for executing allowlisted shell commands. Built with FastAPI.
 
 ## Quick Start
 
@@ -73,6 +73,6 @@ Edit `commands.json`:
 ## Security
 
 - Commands executed as list (no shell injection)
-- Whitelist-only commands and flags
+- Allowlist-only commands and flags
 - 30 second timeout
 - Bearer token required

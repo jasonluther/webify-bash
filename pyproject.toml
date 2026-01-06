@@ -1,7 +1,7 @@
 [project]
 name = "webify-bash"
 version = "0.1.0"
-description = "HTTP API for executing whitelisted shell commands"
+description = "HTTP API for executing allowlisted shell commands"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi",

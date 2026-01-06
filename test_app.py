@@ -93,6 +93,34 @@ class TestExecuteEndpoint:
         assert response.status_code == 400
 
 
+class TestCommandsJsonSchema:
+    def test_all_commands_have_required_keys(self):
+        for cmd, config in ALLOWED_COMMANDS.items():
+            assert "flags" in config, f"{cmd} missing 'flags'"
+            assert "bare_arg" in config, f"{cmd} missing 'bare_arg'"
+
+    def test_flags_are_list_of_strings(self):
+        for cmd, config in ALLOWED_COMMANDS.items():
+            assert isinstance(config["flags"], list), f"{cmd} flags must be a list"
+            for flag in config["flags"]:
+                assert isinstance(flag, str), f"{cmd} flag must be string"
+
+    def test_flags_start_with_dash(self):
+        for cmd, config in ALLOWED_COMMANDS.items():
+            for flag in config["flags"]:
+                assert flag.startswith("-"), f"{cmd} flag '{flag}' must start with '-'"
+
+    def test_bare_arg_is_boolean(self):
+        for cmd, config in ALLOWED_COMMANDS.items():
+            assert isinstance(config["bare_arg"], bool), f"{cmd} bare_arg must be boolean"
+
+    def test_command_names_are_valid(self):
+        for cmd in ALLOWED_COMMANDS.keys():
+            assert cmd, "Command name cannot be empty"
+            assert "/" not in cmd, f"Command '{cmd}' cannot contain '/'"
+            assert " " not in cmd, f"Command '{cmd}' cannot contain spaces"
+
+
 class TestCommandsEndpoint:
     def test_list_commands(self):
         response = client.get(
