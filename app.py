@@ -1,32 +1,26 @@
 #!/usr/bin/env python3
 import json
-import os
 import subprocess
-from pathlib import Path
 from typing import Optional
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-load_dotenv()
+from config import config
+
+config.validate()
 
 app = FastAPI(title="Shell Command API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://jasonluther.github.io"],
+    allow_origins=config.ALLOWED_ORIGINS,
     allow_methods=["GET", "POST"],
     allow_headers=["Authorization", "Content-Type"],
 )
 
-BEARER_TOKEN = os.getenv("BEARER_TOKEN")
-if not BEARER_TOKEN:
-    raise RuntimeError("BEARER_TOKEN must be set in environment")
-
-COMMANDS_FILE = Path(__file__).parent / "commands.json"
-ALLOWED_COMMANDS = json.loads(COMMANDS_FILE.read_text())
+ALLOWED_COMMANDS = json.loads(config.COMMANDS_FILE.read_text())
 
 
 class CommandRequest(BaseModel):
@@ -45,7 +39,7 @@ class CommandResponse(BaseModel):
 def verify_token(authorization: str) -> bool:
     if not authorization.startswith("Bearer "):
         return False
-    return authorization[7:] == BEARER_TOKEN
+    return authorization[7:] == config.BEARER_TOKEN
 
 
 def validate_command(req: CommandRequest) -> list[str]:
@@ -54,13 +48,13 @@ def validate_command(req: CommandRequest) -> list[str]:
             status_code=400, detail=f"Command '{req.command}' is not allowed"
         )
 
-    config = ALLOWED_COMMANDS[req.command]
+    cmd_config = ALLOWED_COMMANDS[req.command]
     cmd_list = [req.command]
 
     if req.flags:
         for flag in req.flags:
             flag_parts = flag.split(None, 1)
-            if flag_parts[0] not in config["flags"]:
+            if flag_parts[0] not in cmd_config["flags"]:
                 raise HTTPException(
                     status_code=400,
                     detail=f"Flag '{flag_parts[0]}' is not allowed for command '{req.command}'",
@@ -68,7 +62,7 @@ def validate_command(req: CommandRequest) -> list[str]:
             cmd_list.extend(flag_parts)
 
     if req.args:
-        if not config["bare_arg"]:
+        if not cmd_config["bare_arg"]:
             raise HTTPException(
                 status_code=400,
                 detail=f"Command '{req.command}' does not accept arguments",
@@ -86,7 +80,9 @@ def execute_command(request: CommandRequest, authorization: str = Header(...)):
     cmd_list = validate_command(request)
 
     try:
-        result = subprocess.run(cmd_list, capture_output=True, text=True, timeout=30)
+        result = subprocess.run(
+            cmd_list, capture_output=True, text=True, timeout=config.COMMAND_TIMEOUT
+        )
     except subprocess.TimeoutExpired:
         raise HTTPException(status_code=408, detail="Command timed out")
     except Exception as e:
@@ -110,4 +106,4 @@ def list_commands(authorization: str = Header(...)):
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=config.HOST, port=config.PORT)

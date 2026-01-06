@@ -60,9 +60,24 @@ Response:
 
 ## Configuration
 
-| Variable | Description |
-|----------|-------------|
-| `BEARER_TOKEN` | Auth token (required in `.env`) |
+Copy `.env.example` to `.env` and set your values:
+
+```bash
+cp .env.example .env
+# Edit .env and set BEARER_TOKEN
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BEARER_TOKEN` | (required) | Auth token - app won't start without it |
+| `PORT` | `8000` | Server port |
+| `HOST` | `0.0.0.0` | Server host |
+| `COMMAND_TIMEOUT` | `30` | Command timeout in seconds |
+| `ALLOWED_ORIGINS` | `https://jasonluther.github.io` | CORS origins (comma-separated) |
+| `CONTAINER_NAME` | `webify-bash` | Container name |
+| `LOCAL_IMAGE_NAME` | `webify-bash` | Local container image name |
+| `GHCR_IMAGE` | `ghcr.io/jasonluther/webify-bash:latest` | GitHub container image |
+| `COMMANDS_FILE` | `commands.json` | Path to commands config |
 
 ## Adding Commands
 

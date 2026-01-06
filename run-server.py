@@ -1,39 +1,13 @@
 #!/usr/bin/env python3
 import argparse
-import os
 import shutil
 import subprocess
 import sys
-from pathlib import Path
 
-IMAGE_NAME = "webify-bash"
-GHCR_IMAGE = "ghcr.io/jasonluther/webify-bash:latest"
-CONTAINER_NAME = "webify-bash"
-PORT = os.environ.get("PORT", "8000")
+from config import config
 
 
-def load_env():
-    """Load .env file and return dict of values."""
-    env_file = Path(__file__).parent / ".env"
-    if not env_file.exists():
-        print("Error: .env file not found", file=sys.stderr)
-        sys.exit(1)
-
-    env = {}
-    for line in env_file.read_text().splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            key, _, value = line.partition("=")
-            env[key.strip()] = value.strip()
-
-    if "BEARER_TOKEN" not in env or not env["BEARER_TOKEN"]:
-        print("Error: BEARER_TOKEN not set in .env", file=sys.stderr)
-        sys.exit(1)
-
-    return env
-
-
-def find_container_runtime():
+def find_container_runtime() -> str:
     """Find podman or docker, preferring podman."""
     for cmd in ["podman", "docker"]:
         if shutil.which(cmd):
@@ -42,36 +16,33 @@ def find_container_runtime():
     sys.exit(1)
 
 
-def run_cmd(args, check=True):
+def run_cmd(args: list[str], check: bool = True) -> subprocess.CompletedProcess:
     """Print and run a command."""
     print(f"$ {' '.join(args)}")
     return subprocess.run(args, check=check)
 
 
-def start_uvicorn(env):
+def start_uvicorn() -> None:
     """Start server with uvicorn (no container)."""
-    cmd = ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", PORT]
-    print(f"Starting server at http://localhost:{PORT}")
+    config.validate()
+    cmd = ["uvicorn", "app:app", "--host", config.HOST, "--port", str(config.PORT)]
+    print(f"Starting server at http://localhost:{config.PORT}")
     run_cmd(cmd)
 
 
-def start_container(runtime, image, env, build=False):
+def start_container(runtime: str, image: str, build: bool = False) -> None:
     """Start server in container."""
+    config.validate()
+
     if build:
-        run_cmd([runtime, "build", "-t", IMAGE_NAME, "."])
-        image = IMAGE_NAME
+        run_cmd([runtime, "build", "-t", config.LOCAL_IMAGE_NAME, "."])
+        image = config.LOCAL_IMAGE_NAME
 
     # Stop existing container if running
-    subprocess.run(
-        [runtime, "stop", CONTAINER_NAME],
-        capture_output=True,
-    )
-    subprocess.run(
-        [runtime, "rm", CONTAINER_NAME],
-        capture_output=True,
-    )
+    subprocess.run([runtime, "stop", config.CONTAINER_NAME], capture_output=True)
+    subprocess.run([runtime, "rm", config.CONTAINER_NAME], capture_output=True)
 
-    if image == GHCR_IMAGE:
+    if image == config.GHCR_IMAGE:
         run_cmd([runtime, "pull", image])
 
     cmd = [
@@ -79,25 +50,29 @@ def start_container(runtime, image, env, build=False):
         "run",
         "--rm",
         "--name",
-        CONTAINER_NAME,
+        config.CONTAINER_NAME,
         "-p",
-        f"{PORT}:8000",
+        f"{config.PORT}:8000",
         "-e",
-        f"BEARER_TOKEN={env['BEARER_TOKEN']}",
+        f"BEARER_TOKEN={config.BEARER_TOKEN}",
+        "-e",
+        f"COMMAND_TIMEOUT={config.COMMAND_TIMEOUT}",
+        "-e",
+        f"ALLOWED_ORIGINS={','.join(config.ALLOWED_ORIGINS)}",
         image,
     ]
-    print(f"Starting container at http://localhost:{PORT}")
+    print(f"Starting container at http://localhost:{config.PORT}")
     run_cmd(cmd)
 
 
-def stop_container(runtime):
+def stop_container(runtime: str) -> None:
     """Stop running container."""
-    result = run_cmd([runtime, "stop", CONTAINER_NAME], check=False)
+    result = run_cmd([runtime, "stop", config.CONTAINER_NAME], check=False)
     if result.returncode != 0:
-        print(f"Container '{CONTAINER_NAME}' is not running")
+        print(f"Container '{config.CONTAINER_NAME}' is not running")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run the webify-bash server",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -147,16 +122,14 @@ Examples:
         stop_container(runtime)
         return
 
-    env = load_env()
-
     if args.uvicorn:
-        start_uvicorn(env)
+        start_uvicorn()
     else:
         runtime = find_container_runtime()
         if args.local_container:
-            start_container(runtime, IMAGE_NAME, env, build=True)
+            start_container(runtime, config.LOCAL_IMAGE_NAME, build=True)
         else:
-            start_container(runtime, GHCR_IMAGE, env, build=False)
+            start_container(runtime, config.GHCR_IMAGE, build=False)
 
 
 if __name__ == "__main__":
