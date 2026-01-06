@@ -61,11 +61,10 @@ Response:
 ## Configuration
 
 ```bash
-cp .env.example .env
-# Edit .env and set BEARER_TOKEN
+echo "BEARER_TOKEN=your-secret" > .env
 ```
 
-Defaults are in `defaults.env`. Override any setting in your `.env` file.
+Defaults are in `defaults.env`. Override any setting in `.env`.
 
 | Variable | Description |
 | ---------- | ------------- |
