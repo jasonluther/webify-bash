@@ -26,9 +26,9 @@ class TestVerifyToken:
 
 class TestValidateCommand:
     def test_valid_command(self):
-        req = CommandRequest(command="ls", flags=["-l"], args=["/tmp"])
+        req = CommandRequest(command="echo", flags=["-n"], args=["hello"])
         result = validate_command(req)
-        assert result == ["ls", "-l", "/tmp"]
+        assert result == ["echo", "-n", "hello"]
 
     def test_command_without_flags_or_args(self):
         req = CommandRequest(command="whoami")
@@ -42,7 +42,7 @@ class TestValidateCommand:
         assert "not allowed" in str(exc.value.detail)
 
     def test_invalid_flag(self):
-        req = CommandRequest(command="ls", flags=["--delete"])
+        req = CommandRequest(command="echo", flags=["--delete"])
         with pytest.raises(Exception) as exc:
             validate_command(req)
         assert "not allowed" in str(exc.value.detail)
@@ -54,19 +54,21 @@ class TestValidateCommand:
         assert "does not accept arguments" in str(exc.value.detail)
 
     def test_multiple_flags(self):
-        req = CommandRequest(command="ls", flags=["-l", "-a"])
+        req = CommandRequest(command="./demo.sh", flags=["-u", "-n 3"])
         result = validate_command(req)
-        assert result == ["ls", "-l", "-a"]
+        assert result == ["./demo.sh", "-u", "-n", "3"]
 
     def test_flag_with_value(self):
-        req = CommandRequest(command="head", flags=["-n 5"], args=["/etc/hosts"])
+        req = CommandRequest(command="./demo.sh", flags=["-n 5", "-m hello"])
         result = validate_command(req)
-        assert result == ["head", "-n", "5", "/etc/hosts"]
+        assert result == ["./demo.sh", "-n", "5", "-m", "hello"]
 
     def test_flag_with_value_and_simple_flag(self):
-        req = CommandRequest(command="head", flags=["-n 10", "-c 100"])
+        req = CommandRequest(
+            command="./demo.sh", flags=["--count 3", "--message test", "-u"]
+        )
         result = validate_command(req)
-        assert result == ["head", "-n", "10", "-c", "100"]
+        assert result == ["./demo.sh", "--count", "3", "--message", "test", "-u"]
 
 
 class TestExecuteEndpoint:
@@ -84,13 +86,14 @@ class TestExecuteEndpoint:
     def test_flag_with_value(self):
         response = client.post(
             "/execute",
-            json={"command": "head", "flags": ["-n 1"], "args": ["/etc/hosts"]},
+            json={"command": "./demo.sh", "flags": ["-n 2", "-m test"]},
             headers={"Authorization": "Bearer test-token"},
         )
         assert response.status_code == 200
         data = response.json()
         assert data["return_code"] == 0
-        assert data["executed_command"] == "head -n 1 /etc/hosts"
+        assert data["executed_command"] == "./demo.sh -n 2 -m test"
+        assert "test" in data["stdout"]
 
     def test_unauthorized(self):
         response = client.post(
@@ -139,8 +142,14 @@ class TestCommandsJsonSchema:
     def test_command_names_are_valid(self):
         for cmd in ALLOWED_COMMANDS.keys():
             assert cmd, "Command name cannot be empty"
-            assert "/" not in cmd, f"Command '{cmd}' cannot contain '/'"
             assert " " not in cmd, f"Command '{cmd}' cannot contain spaces"
+            # Allow ./ prefix for local scripts, but no other path traversal
+            if cmd.startswith("./"):
+                assert (
+                    "/" not in cmd[2:]
+                ), f"Command '{cmd}' cannot contain path traversal"
+            else:
+                assert "/" not in cmd, f"Command '{cmd}' cannot contain '/'"
 
 
 class TestCommandsEndpoint:
@@ -150,9 +159,9 @@ class TestCommandsEndpoint:
         )
         assert response.status_code == 200
         data = response.json()
-        assert "ls" in data
+        assert "./demo.sh" in data
         assert "echo" in data
-        assert data["ls"]["bare_arg"] is True
+        assert data["echo"]["bare_arg"] is True
 
     def test_unauthorized(self):
         response = client.get("/commands", headers={"Authorization": "Bearer wrong"})

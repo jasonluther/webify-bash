@@ -2,7 +2,7 @@
 name = "webify-bash"
 version = "0.1.0"
 description = "HTTP API for executing allowlisted shell commands"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "fastapi",
     "uvicorn",

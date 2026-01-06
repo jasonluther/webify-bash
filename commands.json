@@ -1,7 +1,7 @@
 {
+  "./demo.sh": {"flags": ["-n", "-m", "-u", "--count", "--message", "--uppercase"], "bare_arg": false},
   "echo": {"flags": ["-n", "-e"], "bare_arg": true},
-  "head": {"flags": ["-n", "-c"], "bare_arg": true},
-  "ls": {"flags": ["-l", "-a", "-la", "-lh", "-alh", "-1", "-R"], "bare_arg": true},
+  "date": {"flags": ["-u", "-I", "-R"], "bare_arg": false},
   "uname": {"flags": ["-a", "-s", "-n", "-r", "-v", "-m", "-p", "-o"], "bare_arg": false},
   "whoami": {"flags": [], "bare_arg": false}
 }

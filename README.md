@@ -7,14 +7,29 @@ HTTP API for executing allowlisted shell commands. Built with FastAPI.
 ## Quick Start
 
 ```bash
-# Run with container
-podman run -p 8000:8000 -e BEARER_TOKEN=secret ghcr.io/jasonluther/webify-bash
+# Create .env file
+echo "BEARER_TOKEN=secret" > .env
 
-# Test
+# Run server (uses GitHub container image by default)
+./run-server.py
+
+# Or run with uvicorn directly
+./run-server.py --uvicorn
+
+# Or build and run local container
+./run-server.py --local-container
+
+# Stop container
+./run-server.py stop
+```
+
+Test with curl:
+
+```bash
 curl -X POST http://localhost:8000/execute \
   -H "Authorization: Bearer secret" \
   -H "Content-Type: application/json" \
-  -d '{"command": "uname", "flags": ["-a"]}'
+  -d '{"command": "./demo.sh", "flags": ["-n 3", "-m hello", "-u"]}'
 ```
 
 ## Web UI
@@ -34,20 +49,20 @@ GET  /docs      - Interactive API docs
 Request:
 
 ```json
-{"command": "head", "flags": ["-n 5"], "args": ["/etc/hosts"]}
+{"command": "./demo.sh", "flags": ["-n 3", "-m hello"]}
 ```
 
 Response:
 
 ```json
-{"executed_command": "head -n 5 /etc/hosts", "return_code": 0, "stdout": "...", "stderr": ""}
+{"executed_command": "./demo.sh -n 3 -m hello", "return_code": 0, "stdout": "hello\nhello\nhello\n", "stderr": ""}
 ```
 
 ## Configuration
 
 | Variable | Description |
 |----------|-------------|
-| `BEARER_TOKEN` | Auth token (required) |
+| `BEARER_TOKEN` | Auth token (required in `.env`) |
 
 ## Adding Commands
 
@@ -69,3 +84,4 @@ Edit `commands.json`:
 - Allowlist-only commands and flags
 - 30 second timeout
 - Bearer token required
+- No file-reading commands (ls, cat, head, etc.)
