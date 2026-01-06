@@ -5,42 +5,31 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+# Load defaults first, then .env overrides
+load_dotenv(Path(__file__).parent / "defaults.env")
+load_dotenv(override=True)
 
 
 class Config:
-    # Required - no default
-    BEARER_TOKEN: str = os.getenv("BEARER_TOKEN", "")
-
-    # Server settings
-    PORT: int = int(os.getenv("PORT", "8000"))
-    HOST: str = os.getenv("HOST", "0.0.0.0")
-    COMMAND_TIMEOUT: int = int(os.getenv("COMMAND_TIMEOUT", "30"))
-
-    # CORS - comma-separated list of origins
+    BEARER_TOKEN: str = os.environ.get("BEARER_TOKEN", "")
+    PORT: int = int(os.environ["PORT"])
+    HOST: str = os.environ["HOST"]
+    COMMAND_TIMEOUT: int = int(os.environ["COMMAND_TIMEOUT"])
     ALLOWED_ORIGINS: list[str] = [
         origin.strip()
-        for origin in os.getenv(
-            "ALLOWED_ORIGINS", "https://jasonluther.github.io"
-        ).split(",")
+        for origin in os.environ["ALLOWED_ORIGINS"].split(",")
         if origin.strip()
     ]
-
-    # Container settings
-    CONTAINER_NAME: str = os.getenv("CONTAINER_NAME", "webify-bash")
-    LOCAL_IMAGE_NAME: str = os.getenv("LOCAL_IMAGE_NAME", "webify-bash")
-    GHCR_IMAGE: str = os.getenv("GHCR_IMAGE", "ghcr.io/jasonluther/webify-bash:latest")
-
-    # Commands config file
-    COMMANDS_FILE: Path = Path(
-        os.getenv("COMMANDS_FILE", str(Path(__file__).parent / "commands.json"))
-    )
+    CONTAINER_NAME: str = os.environ["CONTAINER_NAME"]
+    LOCAL_IMAGE_NAME: str = os.environ["LOCAL_IMAGE_NAME"]
+    GHCR_IMAGE: str = os.environ["GHCR_IMAGE"]
+    COMMANDS_FILE: Path = Path(__file__).parent / os.environ["COMMANDS_FILE"]
 
     @classmethod
     def validate(cls) -> None:
         """Validate required configuration. Exit if invalid."""
         if not cls.BEARER_TOKEN:
-            print("Error: BEARER_TOKEN is required", file=sys.stderr)
+            print("Error: BEARER_TOKEN is required in .env", file=sys.stderr)
             sys.exit(1)
 
 
